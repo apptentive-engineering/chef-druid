@@ -8,6 +8,27 @@ action :install do
   node_type = @new_resource.node_type
   Chef::Log.info("Setting up a Druid #{node_type} node")
 
+
+  zk_ips = nil
+  if Chef::Config[:solo] && node[:druid][:zookeeper_role]
+    Chef::Log.warn("Chef Solo does not support search, using local IP for zookeeper")
+    zk_ips = node['ipaddress']
+  elsif node[:druid][:zookeeper_role]
+
+    query = "chef_environment:#{node.chef_environment} AND roles:#{node['druid']['zookeeper_role']}"
+    Chef::Log.info("Zookeeper discovery using Chef search query '#{query}'")
+    zk_ips = search(:node, query).map(&:ipaddress).sort.uniq.join(",")
+
+    if zk_ips.empty?
+      Chef::Log.warn("Could not find Zookeeper nodes, falling back to local IP")
+      zk_ips = node['ipaddress']
+    end
+  end
+
+  if zk_ips
+    node.set[:druid][:properties]['druid.zk.service.host'] = zk_ips
+  end
+
 # Create user, group, and necessary folders
   group node[:druid][:group] do
     action :create
@@ -65,7 +86,7 @@ action :install do
     code "tar -C #{node[:druid][:install_dir]} -zxf #{druid_archive} && " +
          "chown -R #{node[:druid][:user]}:#{node[:druid][:group]} '#{node[:druid][:install_dir]}'"
   end
-  
+
   druid_current_version_path = ::File.join(node[:druid][:install_dir], "druid-#{node[:druid][:version]}")
   link_path = ::File.join(node[:druid][:install_dir], "current")
 

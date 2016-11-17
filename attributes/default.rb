@@ -32,6 +32,9 @@ default[:druid][:properties]["druid.monitoring.monitors"] = common_monitors
 default[:druid][:properties]["druid.emitter"] = "logging"
 default['java']['jdk_version'] = '7'
 
+# Dynamic configuration
+default[:druid][:zookeeper_role] = nil # Chef role for Zookeeper IP lookup
+
 # Node-type-specific configuration. In cases of conflict,
 # the type-specific config overrides the common config.
 
