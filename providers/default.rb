@@ -67,7 +67,8 @@ action :install do
     group node[:druid][:group]
   end
 
-  druid_archive = "#{node[:druid][:src_dir]}/services/target/druid-#{node[:druid][:version]}-bin.tar.gz"
+  druid_archive = "#{node[:druid][:src_dir]}/distribution/target/druid-#{node[:druid][:version]}-bin.tar.gz"
+
   node.set[:maven][:version] = 3
   node.set[:maven][:repository_root] = node[:druid][:install_dir] + "/m2/repository"
 
@@ -125,6 +126,30 @@ action :install do
     owner node[:druid][:user]
     group node[:druid][:group]
     mode "0755"
+  end
+
+  if node[:druid][node_type][:properties]["druid.segmentCache.locations"]
+    require 'json'
+    JSON.parse(node[:druid][node_type][:properties]["druid.segmentCache.locations"]).each do |loc|
+      directory loc["path"] do
+        recursive true
+        owner node[:druid][:user]
+        group node[:druid][:group]
+        mode "0755"
+      end
+    end
+  end
+
+  if node[:druid][node_type][:properties]["druid.indexer.fork.property.druid.segmentCache.locations"]
+    require 'json'
+    JSON.parse(node[:druid][node_type][:properties]["druid.indexer.fork.property.druid.segmentCache.locations"]).each do |loc|
+      directory loc["path"] do
+        recursive true
+        owner node[:druid][:user]
+        group node[:druid][:group]
+        mode "0755"
+      end
+    end
   end
 
   # Select common properties and node type properties
