@@ -68,12 +68,28 @@ action :install do
   end
 
   druid_archive = "#{node[:druid][:src_dir]}/services/target/druid-#{node[:druid][:version]}-bin.tar.gz"
+  node.set[:maven][:version] = 3
+  node.set[:maven][:repository_root] = node[:druid][:install_dir] + "/m2/repository"
+
+  directory node[:maven][:repository_root] do
+    owner node[:druid][:user]
+    group node[:druid][:group]
+    action :create
+    recursive true
+  end
+
+  run_context.include_recipe "maven::default"
 
   # Build druid, send output to logfile because it's so verbose it seems to causes problems
-  package 'maven'
   bash 'compile druid' do
     cwd node[:druid][:src_dir]
     code "mvn clean package -DskipTests &>chef_druid_build.log"
+    environment({
+      "M2_HOME" => node[:maven][:m2_home],
+      "JAVA_HOME" => node[:java][:java_home],
+      "MAVEN_OPTS" => "-Dmaven.repo.local=#{node[:maven][:repository_root]}",
+      "PATH" => "#{node[:maven][:m2_home]}/bin:#{ENV['PATH']}"
+    })
     user node[:druid][:user]
     group node[:druid][:group]
     only_if { ::Dir.glob(druid_archive).empty? }

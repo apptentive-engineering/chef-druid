@@ -8,3 +8,4 @@ version          '0.0.3'
 
 depends "java"
 depends "git"
+depends "maven"
