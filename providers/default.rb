@@ -117,7 +117,7 @@ action :install do
   # http://druid.io/docs/latest/operations/including-extensions.html
   bash 'install contributor dependencies' do
     cwd link_path
-    owner node[:druid][:user]
+    user node[:druid][:user]
     group node[:druid][:group]
     code "java -cp 'lib/*' -Ddruid.extensions.directory='extensions' " \
          "-Ddruid.extensions.hadoopDependenciesDir='hadoop-dependencies' " \
