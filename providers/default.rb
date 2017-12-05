@@ -113,6 +113,18 @@ action :install do
     to druid_current_version_path
   end
 
+  extension_coordinates = node[:druid][:extension_coordinates]
+  # http://druid.io/docs/latest/operations/including-extensions.html
+  bash 'install contributor dependencies' do
+    cwd link_path
+    owner node[:druid][:user]
+    group node[:druid][:group]
+    code "java -cp 'lib/*' -Ddruid.extensions.directory='extensions' " \
+         "-Ddruid.extensions.hadoopDependenciesDir='hadoop-dependencies' " \
+         "io.druid.cli.Main tools pull-deps --no-default-hadoop " +
+         extension_coordinates.map { |coordinate| "-c #{coordinate}" }.join(' ')
+  end
+
   # Create config directories
   directory ::File.join(node[:druid][:config_dir], node_type) do
     recursive true
